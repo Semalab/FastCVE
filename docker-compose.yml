@@ -5,6 +5,7 @@ services:
     #--------------------------------------------------------------------------
     fastcve:
         image: "fastcve:${DOCKER_TAG:-latest}"
+        platform: linux/amd64
 
         container_name: fastcve
 
