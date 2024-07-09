@@ -12,7 +12,7 @@ Copyright (c) 2020 to date, Binare Oy (license@binare.io) All rights reserved.
 import re
 import json
 from typing import List, Iterator
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean,  cast, Numeric
 from sqlalchemy.sql import text, expression
 from sqlalchemy.orm import aliased
 from generic import ApplicationContext
@@ -40,6 +40,21 @@ def search_cves(appctx: ApplicationContext, opts: SearchOptions):
 
         # prepare the search query
         query = session.query(cve_table)
+        # Filter by EPSS score
+        if opts.epssScoreGt:
+            query = query.filter(cast(cve_table.data['metrics']['epss']['score'].astext, Numeric) > opts.epssScoreGt)
+        if opts.epssScoreLt:
+            query = query.filter(cast(cve_table.data['metrics']['epss']['score'].astext, Numeric) < opts.epssScoreLt)
+
+        # Filter by EPSS percentile
+        if opts.epssPercGt:
+            query = query.filter(cast(cve_table.data['metrics']['epss']['percentile'].astext, Numeric) > opts.epssPercGt)
+        if opts.epssPercLt:
+            query = query.filter(cast(cve_table.data['metrics']['epss']['percentile'].astext, Numeric) < opts.epssPercLt)
+
+        # filter by presense of known_exploited_vulnerabilities
+        if opts.exploitable:
+            query = query.filter(cve_table.data.has_key('cisaExploitAdd'))
 
         # filter by the cve IDS, either directly specified in the search options
         if opts.cveId:
